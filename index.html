@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinamik UI Mockup - FİN Axtarış</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #fcfcfc; padding: 40px; font-family: 'Segoe UI', sans-serif; }
+        .form-card { background: white; padding: 30px; border-radius: 12px; border: 1px solid #eee; max-width: 900px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .form-label { font-size: 0.85rem; font-weight: 600; color: #444; margin-bottom: 8px; }
+        .form-control { border-radius: 8px; padding: 12px; border: 1px solid #dcdcdc; background-color: #f9f9f9; transition: all 0.2s; }
+        
+        /* Şəkildəki Xəta Mesajı Dizaynı */
+        .alert-container {
+            display: none;
+            background-color: #fff5f5;
+            border: 1px solid #ff0000;
+            border-left: 5px solid #ff0000;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            max-width: 900px;
+            margin: 0 auto 20px auto;
+            align-items: center;
+        }
+        .alert-icon {
+            color: #ff0000; font-size: 1.2rem; margin-right: 15px; border: 2px solid #ff0000;
+            border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center;
+            justify-content: center; font-weight: bold; font-style: normal;
+        }
+        .alert-text { color: #333; font-weight: 500; font-size: 0.95rem; }
+
+        #personalInfoSection { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; }
+        .btn-search { background-color: white; border: 1px solid #dcdcdc; color: #333; padding: 10px 30px; border-radius: 8px; height: 50px; margin-top: 30px; font-weight: 500; }
+        .btn-search:hover { background-color: #f1f1f1; }
+        
+        .invalid-feedback { display: none; color: #dc3545; font-size: 0.8rem; margin-top: 5px; font-weight: 500; }
+        .is-invalid { border-color: #dc3545 !important; background-color: #fff8f8 !important; }
+        
+        /* Tooltip üçün stil */
+        .info-icon-wrapper { background-color: white; border-left: none; cursor: pointer; }
+        .info-icon { color: #3b71ca; font-style: normal; font-weight: bold; font-size: 1.1rem; }
+        .tooltip-inner { background-color: #333; color: #fff; padding: 10px; font-size: 0.85rem; border-radius: 6px; max-width: 280px; text-align: left; }
+    </style>
+</head>
+<body>
+
+<div id="topAlert" class="alert-container">
+    <div class="alert-icon">i</div>
+    <div class="alert-text">FIN və ya seriya nömrəsi yalnışdır</div>
+</div>
+
+<div class="form-card">
+    <div class="row align-items-start">
+        <div class="col-md-5">
+            <label class="form-label">Səlahiyyətli şəxsin FİN-i</label>
+            <input type="text" id="finInput" class="form-control" placeholder="Daxil edin" maxlength="7" style="text-transform: uppercase;">
+            <div id="finError" class="invalid-feedback">bu xana boş qala bilməz</div>
+        </div>
+        
+        <div class="col-md-5">
+            <label class="form-label">Seriya nömrəsi</label>
+            <div class="input-group">
+                <input type="text" id="serialInput" class="form-control" placeholder="Daxil edin" style="text-transform: uppercase;">
+                <span class="input-group-text info-icon-wrapper" 
+                      data-bs-toggle="tooltip" 
+                      data-bs-placement="top" 
+                      title="Köhnə vəsiqədirsə: AZE yazmadan yalnız 7 rəqəmi; Yeni vəsiqədirsə: Seriya və nömrəni tam daxil edin.">
+                    <i class="info-icon">ⓘ</i>
+                </span>
+            </div>
+            <div id="serialError" class="invalid-feedback">bu xana boş qala bilməz</div>
+        </div>
+
+        <div class="col-md-2">
+            <button type="button" class="btn btn-search w-100" onclick="searchPerson()">Axtar</button>
+        </div>
+    </div>
+
+    <div id="personalInfoSection" class="mt-4">
+        <hr class="my-4" style="border-top: 1px solid #eee;">
+        <div class="row">
+            <div class="col-md-4"><label class="form-label">Səlahiyyətli şəxsin adı</label><input type="text" id="resName" class="form-control" readonly></div>
+            <div class="col-md-4"><label class="form-label">Səlahiyyətli şəxsin soyadı</label><input type="text" id="resSurname" class="form-control" readonly></div>
+            <div class="col-md-4"><label class="form-label">Səlahiyyətli şəxsin ata adı</label><input type="text" id="resFather" class="form-control" readonly></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Tooltip-ləri aktivləşdirən əsas kod (Mütləq lazımdır)
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+
+    function hideElements() {
+        document.getElementById('personalInfoSection').style.display = 'none';
+        document.getElementById('personalInfoSection').style.opacity = '0';
+        document.getElementById('topAlert').style.display = 'none';
+    }
+
+    function searchPerson() {
+        const finInput = document.getElementById('finInput');
+        const serialInput = document.getElementById('serialInput');
+        const finError = document.getElementById('finError');
+        const serialError = document.getElementById('serialError');
+        const alertBox = document.getElementById('topAlert');
+        const section = document.getElementById('personalInfoSection');
+        
+        const finVal = finInput.value.trim().toUpperCase();
+        const serVal = serialInput.value.trim().toUpperCase();
+
+        let canProceed = true;
+
+        // 1. FİN Yoxlanışı
+        if (finVal === "") {
+            finInput.classList.add('is-invalid');
+            finError.innerText = "bu xana boş qala bilməz";
+            finError.style.display = 'block';
+            canProceed = false;
+        } else if (finVal.length < 7) {
+            finInput.classList.add('is-invalid');
+            finError.innerText = "FİN 7 simvoldan ibarət olmalıdır";
+            finError.style.display = 'block';
+            canProceed = false;
+        } else {
+            finInput.classList.remove('is-invalid');
+            finError.style.display = 'none';
+        }
+
+        // 2. Seriya Yoxlanışı
+        if (serVal === "") {
+            serialInput.classList.add('is-invalid');
+            serialError.style.display = 'block';
+            canProceed = false;
+        } else {
+            serialInput.classList.remove('is-invalid');
+            serialError.style.display = 'none';
+        }
+
+        if (!canProceed) {
+            hideElements();
+            return;
+        }
+
+        // 3. Məlumat Yoxlanışı (190EJDN & AA23456789)
+        if (finVal === "190EJDN" && serVal === "AA23456789") {
+            alertBox.style.display = 'none';
+            document.getElementById('resName').value = "Fuad";
+            document.getElementById('resSurname').value = "Suleymanov";
+            document.getElementById('resFather').value = "Huseyn";
+            section.style.display = 'block';
+            setTimeout(() => { section.style.opacity = '1'; }, 10);
+        } else {
+            section.style.display = 'none';
+            alertBox.style.display = 'flex';
+        }
+    }
+
+    // Giriş dəyişəndə təmizləmə
+    document.querySelectorAll('.form-control').forEach(input => {
+        input.addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+            const errId = this.id === 'finInput' ? 'finError' : 'serialError';
+            document.getElementById(errId).style.display = 'none';
+            hideElements();
+        });
+    });
+</script>
+
+</body>
+</html>
